@@ -6,13 +6,36 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-const mockCampaigns = [
-  { id: 1, name: 'Акция весна 2026', status: 'active', sent: 1245, limit: 5000, communities: 12 },
-  { id: 2, name: 'Летняя распродажа', status: 'paused', sent: 890, limit: 3000, communities: 8 },
-  { id: 3, name: 'Новинки каталога', status: 'completed', sent: 5000, limit: 5000, communities: 15 },
+type Campaign = {
+  id: number;
+  name: string;
+  status: 'active' | 'paused' | 'completed';
+  sent: number;
+  limit: number;
+  message: string;
+  selectedCommunities: number[];
+};
+
+const availableCommunities = [
+  { id: 1, name: 'Технологии и IT', members: 45230 },
+  { id: 2, name: 'Маркетинг и реклама', members: 38420 },
+  { id: 3, name: 'Бизнес и стартапы', members: 32100 },
+  { id: 4, name: 'Дизайн и креатив', members: 28900 },
+  { id: 5, name: 'Образование', members: 25400 },
+  { id: 6, name: 'Путешествия', members: 21800 },
+  { id: 7, name: 'Спорт и фитнес', members: 19200 },
+  { id: 8, name: 'Кулинария', members: 16500 },
+];
+
+const initialCampaigns: Campaign[] = [
+  { id: 1, name: 'Акция весна 2026', status: 'active', sent: 1245, limit: 5000, message: 'Весенняя распродажа! Скидки до 50%', selectedCommunities: [1, 2, 3] },
+  { id: 2, name: 'Летняя распродажа', status: 'paused', sent: 890, limit: 3000, message: 'Летние скидки на всё!', selectedCommunities: [4, 5] },
+  { id: 3, name: 'Новинки каталога', status: 'completed', sent: 5000, limit: 5000, message: 'Новая коллекция уже в продаже', selectedCommunities: [1, 2, 3, 4, 5] },
 ];
 
 const mockBots = [
@@ -49,6 +72,9 @@ const mockLogs = [
 
 export default function Index() {
   const [activeTab, setActiveTab] = useState('campaigns');
+  const [campaigns, setCampaigns] = useState<Campaign[]>(initialCampaigns);
+  const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
+  const [editFormData, setEditFormData] = useState({ name: '', message: '', limit: 0, selectedCommunities: [] as number[] });
 
   return (
     <div className="flex h-screen bg-background text-foreground">
@@ -163,7 +189,7 @@ export default function Index() {
             </div>
 
             <div className="grid gap-4">
-              {mockCampaigns.map((campaign) => (
+              {campaigns.map((campaign) => (
                 <Card key={campaign.id} className="p-6 hover:bg-card/80 transition-colors">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -175,16 +201,17 @@ export default function Index() {
                           {campaign.status === 'active' ? 'Активна' : campaign.status === 'paused' ? 'Приостановлена' : 'Завершена'}
                         </Badge>
                       </div>
-                      <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-6 text-sm text-muted-foreground mb-2">
                         <span className="flex items-center gap-1">
                           <Icon name="Users" size={16} />
                           {campaign.sent} / {campaign.limit} получателей
                         </span>
                         <span className="flex items-center gap-1">
                           <Icon name="Hash" size={16} />
-                          {campaign.communities} сообществ
+                          {campaign.selectedCommunities.length} сообществ
                         </span>
                       </div>
+                      <p className="text-sm text-muted-foreground mb-3">{campaign.message}</p>
                       <div className="mt-3 bg-muted rounded-full h-2 overflow-hidden">
                         <div 
                           className="bg-primary h-full transition-all"
@@ -193,9 +220,101 @@ export default function Index() {
                       </div>
                     </div>
                     <div className="flex gap-2 ml-4">
-                      <Button variant="outline" size="icon">
-                        <Icon name="Settings" size={18} />
-                      </Button>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="icon" onClick={() => {
+                            setEditingCampaign(campaign);
+                            setEditFormData({
+                              name: campaign.name,
+                              message: campaign.message,
+                              limit: campaign.limit,
+                              selectedCommunities: campaign.selectedCommunities
+                            });
+                          }}>
+                            <Icon name="Settings" size={18} />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[600px]">
+                          <DialogHeader>
+                            <DialogTitle>Настройка кампании</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4 py-4">
+                            <div className="space-y-2">
+                              <Label>Название кампании</Label>
+                              <Input 
+                                value={editFormData.name}
+                                onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Текст сообщения</Label>
+                              <Textarea 
+                                value={editFormData.message}
+                                onChange={(e) => setEditFormData({ ...editFormData, message: e.target.value })}
+                                rows={4} 
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Лимит получателей</Label>
+                              <Input 
+                                type="number" 
+                                value={editFormData.limit}
+                                onChange={(e) => setEditFormData({ ...editFormData, limit: parseInt(e.target.value) || 0 })}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Выберите сообщества</Label>
+                              <ScrollArea className="h-[200px] border rounded-md p-4">
+                                <div className="space-y-3">
+                                  {availableCommunities.map((community) => (
+                                    <div key={community.id} className="flex items-start space-x-3">
+                                      <Checkbox
+                                        id={`community-${community.id}`}
+                                        checked={editFormData.selectedCommunities.includes(community.id)}
+                                        onCheckedChange={(checked) => {
+                                          if (checked) {
+                                            setEditFormData({
+                                              ...editFormData,
+                                              selectedCommunities: [...editFormData.selectedCommunities, community.id]
+                                            });
+                                          } else {
+                                            setEditFormData({
+                                              ...editFormData,
+                                              selectedCommunities: editFormData.selectedCommunities.filter(id => id !== community.id)
+                                            });
+                                          }
+                                        }}
+                                      />
+                                      <label
+                                        htmlFor={`community-${community.id}`}
+                                        className="flex-1 text-sm cursor-pointer"
+                                      >
+                                        <div className="font-medium">{community.name}</div>
+                                        <div className="text-xs text-muted-foreground">{community.members.toLocaleString()} участников</div>
+                                      </label>
+                                    </div>
+                                  ))}
+                                </div>
+                              </ScrollArea>
+                            </div>
+                            <Button 
+                              className="w-full"
+                              onClick={() => {
+                                if (editingCampaign) {
+                                  setCampaigns(campaigns.map(c => 
+                                    c.id === editingCampaign.id 
+                                      ? { ...c, ...editFormData }
+                                      : c
+                                  ));
+                                  setEditingCampaign(null);
+                                }
+                              }}
+                            >
+                              Сохранить изменения
+                            </Button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
                       <Button variant="outline" size="icon">
                         <Icon name="Play" size={18} />
                       </Button>
