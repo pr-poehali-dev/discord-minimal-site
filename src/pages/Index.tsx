@@ -188,17 +188,6 @@ export default function Index() {
             Боты
           </button>
           
-          <button
-            onClick={() => setActiveTab('analytics')}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-              activeTab === 'analytics' 
-                ? 'bg-sidebar-accent text-sidebar-accent-foreground' 
-                : 'text-sidebar-foreground hover:bg-sidebar-accent/50'
-            }`}
-          >
-            <Icon name="TrendingUp" size={20} />
-            Аналитика
-          </button>
           
           <button
             onClick={() => setActiveTab('logs')}
@@ -609,85 +598,6 @@ export default function Index() {
                   </div>
                 ))}
               </div>
-            </Card>
-          </div>
-        )}
-
-        {activeTab === 'analytics' && (
-          <div className="p-8">
-            <h2 className="text-3xl font-bold mb-6">Аналитика</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-              <Card className="p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-muted-foreground">Всего отправлено</span>
-                  <Icon name="Send" size={20} className="text-primary" />
-                </div>
-                <div className="text-3xl font-bold">1,310</div>
-                <p className="text-xs text-green-500 mt-1">+12% за неделю</p>
-              </Card>
-              
-              <Card className="p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-muted-foreground">Доставлено</span>
-                  <Icon name="CheckCheck" size={20} className="text-green-500" />
-                </div>
-                <div className="text-3xl font-bold">1,250</div>
-                <p className="text-xs text-green-500 mt-1">95.4% успех</p>
-              </Card>
-              
-              <Card className="p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-muted-foreground">Ошибок</span>
-                  <Icon name="AlertCircle" size={20} className="text-destructive" />
-                </div>
-                <div className="text-3xl font-bold">60</div>
-                <p className="text-xs text-muted-foreground mt-1">4.6% от общего</p>
-              </Card>
-            </div>
-
-            <Card className="p-6 mb-6">
-              <h3 className="text-lg font-semibold mb-4">Динамика рассылок за неделю</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={analyticsData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" />
-                  <YAxis stroke="hsl(var(--muted-foreground))" />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '6px',
-                      color: 'hsl(var(--foreground))'
-                    }}
-                    cursor={false}
-                  />
-                  <Line type="monotone" dataKey="sent" stroke="hsl(var(--primary))" strokeWidth={2} />
-                  <Line type="monotone" dataKey="delivered" stroke="hsl(var(--chart-2))" strokeWidth={2} />
-                  <Line type="monotone" dataKey="failed" stroke="hsl(var(--destructive))" strokeWidth={2} />
-                </LineChart>
-              </ResponsiveContainer>
-            </Card>
-
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Топ сообществ по охвату</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={communityData} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis type="number" stroke="hsl(var(--muted-foreground))" />
-                  <YAxis dataKey="name" type="category" stroke="hsl(var(--muted-foreground))" width={120} />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '6px',
-                      color: 'hsl(var(--foreground))'
-                    }}
-                    cursor={false}
-                  />
-                  <Bar dataKey="members" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
             </Card>
           </div>
         )}
