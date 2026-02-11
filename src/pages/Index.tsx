@@ -656,7 +656,8 @@ export default function Index() {
                   <Tooltip 
                     contentStyle={{ 
                       backgroundColor: 'transparent',
-                      border: 'none',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '6px',
                       color: 'hsl(var(--foreground))'
                     }}
                     cursor={false}
@@ -678,7 +679,8 @@ export default function Index() {
                   <Tooltip 
                     contentStyle={{ 
                       backgroundColor: 'transparent',
-                      border: 'none',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '6px',
                       color: 'hsl(var(--foreground))'
                     }}
                     cursor={false}
