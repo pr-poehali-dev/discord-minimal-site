@@ -94,6 +94,8 @@ export default function Index() {
   const [bots, setBots] = useState<Bot[]>(initialBots);
   const [botStatusFilter, setBotStatusFilter] = useState<'all' | 'online' | 'offline' | 'error'>('all');
   const [selectedBots, setSelectedBots] = useState<number[]>([]);
+  const [bulkEditData, setBulkEditData] = useState({ avatar: '', name: '', description: '' });
+  const [showBulkEdit, setShowBulkEdit] = useState(false);
 
   const filteredLogs = useMemo(() => {
     if (logFilter === 'all') return mockLogs;
@@ -136,6 +138,19 @@ export default function Index() {
     } else if (action === 'stop') {
       setBots(bots.map(b => selectedBots.includes(b.id) ? { ...b, status: 'offline' as const } : b));
     }
+  };
+
+  const handleBulkEdit = () => {
+    setBots(bots.map(b => {
+      if (!selectedBots.includes(b.id)) return b;
+      return {
+        ...b,
+        ...(bulkEditData.avatar && { avatar: bulkEditData.avatar }),
+        ...(bulkEditData.name && { name: bulkEditData.name }),
+      };
+    }));
+    setShowBulkEdit(false);
+    setBulkEditData({ avatar: '', name: '', description: '' });
   };
 
   return (
@@ -472,18 +487,57 @@ export default function Index() {
                   )}
                 </div>
                 {selectedBots.length > 0 && (
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
+                    <Dialog open={showBulkEdit} onOpenChange={setShowBulkEdit}>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          <Icon name="Edit" size={16} />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Редактировать {selectedBots.length} ботов</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4 py-4">
+                          <div className="space-y-2">
+                            <Label>Аватарка (эмодзи)</Label>
+                            <Input 
+                              placeholder="Оставьте пустым чтобы не менять"
+                              value={bulkEditData.avatar}
+                              onChange={(e) => setBulkEditData({ ...bulkEditData, avatar: e.target.value })}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Никнейм</Label>
+                            <Input 
+                              placeholder="Оставьте пустым чтобы не менять"
+                              value={bulkEditData.name}
+                              onChange={(e) => setBulkEditData({ ...bulkEditData, name: e.target.value })}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Описание</Label>
+                            <Textarea 
+                              placeholder="Оставьте пустым чтобы не менять"
+                              value={bulkEditData.description}
+                              onChange={(e) => setBulkEditData({ ...bulkEditData, description: e.target.value })}
+                              rows={3}
+                            />
+                          </div>
+                          <Button className="w-full" onClick={handleBulkEdit}>
+                            Применить к {selectedBots.length} ботам
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                     <Button variant="outline" size="sm" onClick={() => handleBulkAction('start')}>
-                      <Icon name="Play" size={16} className="mr-2" />
-                      Запустить
+                      <Icon name="Play" size={16} />
                     </Button>
                     <Button variant="outline" size="sm" onClick={() => handleBulkAction('stop')}>
-                      <Icon name="Pause" size={16} className="mr-2" />
-                      Остановить
+                      <Icon name="Pause" size={16} />
                     </Button>
                     <Button variant="destructive" size="sm" onClick={() => handleBulkAction('delete')}>
-                      <Icon name="Trash2" size={16} className="mr-2" />
-                      Удалить
+                      <Icon name="Trash2" size={16} />
                     </Button>
                   </div>
                 )}
