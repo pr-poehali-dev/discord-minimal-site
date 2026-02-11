@@ -655,7 +655,7 @@ export default function Index() {
                   <YAxis stroke="hsl(var(--muted-foreground))" />
                   <Tooltip 
                     contentStyle={{ 
-                      backgroundColor: 'transparent',
+                      backgroundColor: 'hsl(var(--card))',
                       border: '1px solid hsl(var(--border))',
                       borderRadius: '6px',
                       color: 'hsl(var(--foreground))'
@@ -678,7 +678,7 @@ export default function Index() {
                   <YAxis dataKey="name" type="category" stroke="hsl(var(--muted-foreground))" width={120} />
                   <Tooltip 
                     contentStyle={{ 
-                      backgroundColor: 'transparent',
+                      backgroundColor: 'hsl(var(--card))',
                       border: '1px solid hsl(var(--border))',
                       borderRadius: '6px',
                       color: 'hsl(var(--foreground))'
