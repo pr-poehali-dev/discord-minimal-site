@@ -39,10 +39,24 @@ const initialCampaigns: Campaign[] = [
   { id: 3, name: 'Новинки каталога', status: 'completed', sent: 5000, limit: 5000, message: 'Новая коллекция уже в продаже', selectedCommunities: [1, 2, 3, 4, 5] },
 ];
 
-const mockBots = [
-  { id: 1, name: 'Bot Alpha', avatar: '🤖', status: 'online', messagesSent: 450 },
-  { id: 2, name: 'Bot Beta', avatar: '🦾', status: 'online', messagesSent: 320 },
-  { id: 3, name: 'Bot Gamma', avatar: '🎯', status: 'offline', messagesSent: 180 },
+type Bot = {
+  id: number;
+  name: string;
+  avatar: string;
+  status: 'online' | 'offline' | 'error';
+  messagesSent: number;
+  dailyLimit: number;
+  lastActive: string;
+  token: string;
+};
+
+const initialBots: Bot[] = [
+  { id: 1, name: 'Bot Alpha', avatar: '🤖', status: 'online', messagesSent: 450, dailyLimit: 1000, lastActive: '2 мин назад', token: 'xxx...xxx1' },
+  { id: 2, name: 'Bot Beta', avatar: '🦾', status: 'online', messagesSent: 320, dailyLimit: 1000, lastActive: '5 мин назад', token: 'xxx...xxx2' },
+  { id: 3, name: 'Bot Gamma', avatar: '🎯', status: 'offline', messagesSent: 180, dailyLimit: 1000, lastActive: '2 часа назад', token: 'xxx...xxx3' },
+  { id: 4, name: 'Bot Delta', avatar: '⚡', status: 'online', messagesSent: 520, dailyLimit: 1500, lastActive: '1 мин назад', token: 'xxx...xxx4' },
+  { id: 5, name: 'Bot Epsilon', avatar: '🚀', status: 'error', messagesSent: 95, dailyLimit: 1000, lastActive: '30 мин назад', token: 'xxx...xxx5' },
+  { id: 6, name: 'Bot Zeta', avatar: '💎', status: 'online', messagesSent: 280, dailyLimit: 1000, lastActive: '3 мин назад', token: 'xxx...xxx6' },
 ];
 
 const analyticsData = [
@@ -77,11 +91,52 @@ export default function Index() {
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
   const [editFormData, setEditFormData] = useState({ name: '', message: '', limit: 0, selectedCommunities: [] as number[] });
   const [logFilter, setLogFilter] = useState<'all' | 'success' | 'error' | 'warning' | 'info'>('all');
+  const [bots, setBots] = useState<Bot[]>(initialBots);
+  const [botStatusFilter, setBotStatusFilter] = useState<'all' | 'online' | 'offline' | 'error'>('all');
+  const [selectedBots, setSelectedBots] = useState<number[]>([]);
 
   const filteredLogs = useMemo(() => {
     if (logFilter === 'all') return mockLogs;
     return mockLogs.filter(log => log.type === logFilter);
   }, [logFilter]);
+
+  const filteredBots = useMemo(() => {
+    if (botStatusFilter === 'all') return bots;
+    return bots.filter(bot => bot.status === botStatusFilter);
+  }, [bots, botStatusFilter]);
+
+  const botStats = useMemo(() => {
+    const online = bots.filter(b => b.status === 'online').length;
+    const offline = bots.filter(b => b.status === 'offline').length;
+    const error = bots.filter(b => b.status === 'error').length;
+    const totalSent = bots.reduce((sum, b) => sum + b.messagesSent, 0);
+    return { online, offline, error, total: bots.length, totalSent };
+  }, [bots]);
+
+  const toggleBotSelection = (id: number) => {
+    setSelectedBots(prev => 
+      prev.includes(id) ? prev.filter(bid => bid !== id) : [...prev, id]
+    );
+  };
+
+  const toggleAllBots = () => {
+    if (selectedBots.length === filteredBots.length) {
+      setSelectedBots([]);
+    } else {
+      setSelectedBots(filteredBots.map(b => b.id));
+    }
+  };
+
+  const handleBulkAction = (action: 'start' | 'stop' | 'delete') => {
+    if (action === 'delete') {
+      setBots(bots.filter(b => !selectedBots.includes(b.id)));
+      setSelectedBots([]);
+    } else if (action === 'start') {
+      setBots(bots.map(b => selectedBots.includes(b.id) ? { ...b, status: 'online' as const } : b));
+    } else if (action === 'stop') {
+      setBots(bots.map(b => selectedBots.includes(b.id) ? { ...b, status: 'offline' as const } : b));
+    }
+  };
 
   return (
     <div className="flex h-screen bg-background text-foreground">
@@ -336,45 +391,137 @@ export default function Index() {
         {activeTab === 'bots' && (
           <div className="p-8">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-3xl font-bold">Управление ботами</h2>
+              <h2 className="text-3xl font-bold">Сеть ботов</h2>
               <Dialog>
                 <DialogTrigger asChild>
                   <Button className="gap-2">
                     <Icon name="Plus" size={18} />
-                    Добавить бота
+                    Добавить ботов
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Добавить бота</DialogTitle>
+                    <DialogTitle>Добавить ботов в сеть</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4 py-4">
                     <div className="space-y-2">
-                      <Label>Токен бота (можно несколько через запятую)</Label>
-                      <Textarea placeholder="TOKEN1, TOKEN2, TOKEN3..." rows={3} />
+                      <Label>Токены ботов (каждый с новой строки)</Label>
+                      <Textarea placeholder="TOKEN1\nTOKEN2\nTOKEN3..." rows={6} />
                     </div>
-                    <Button className="w-full">Добавить</Button>
+                    <div className="space-y-2">
+                      <Label>Лимит сообщений в день (для каждого)</Label>
+                      <Input type="number" defaultValue={1000} />
+                    </div>
+                    <Button className="w-full">Добавить в сеть</Button>
                   </div>
                 </DialogContent>
               </Dialog>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {mockBots.map((bot) => (
-                <Card key={bot.id} className="p-6 hover:bg-card/80 transition-colors">
-                  <div className="flex items-start gap-4">
-                    <div className="text-4xl">{bot.avatar}</div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold">{bot.name}</h3>
-                        <div className={`w-2 h-2 rounded-full ${bot.status === 'online' ? 'bg-green-500' : 'bg-gray-500'}`} />
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              <Card className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-muted-foreground">Всего ботов</span>
+                  <Icon name="Bot" size={20} className="text-primary" />
+                </div>
+                <div className="text-2xl font-bold">{botStats.total}</div>
+              </Card>
+              <Card className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-muted-foreground">Онлайн</span>
+                  <div className="w-2 h-2 rounded-full bg-green-500" />
+                </div>
+                <div className="text-2xl font-bold text-green-500">{botStats.online}</div>
+              </Card>
+              <Card className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-muted-foreground">Офлайн</span>
+                  <div className="w-2 h-2 rounded-full bg-gray-500" />
+                </div>
+                <div className="text-2xl font-bold text-muted-foreground">{botStats.offline}</div>
+              </Card>
+              <Card className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-muted-foreground">Ошибки</span>
+                  <Icon name="AlertCircle" size={20} className="text-destructive" />
+                </div>
+                <div className="text-2xl font-bold text-destructive">{botStats.error}</div>
+              </Card>
+            </div>
+
+            <Card className="mb-6">
+              <div className="p-4 border-b border-border flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <Checkbox
+                    checked={selectedBots.length === filteredBots.length && filteredBots.length > 0}
+                    onCheckedChange={toggleAllBots}
+                  />
+                  <Select value={botStatusFilter} onValueChange={(value) => setBotStatusFilter(value as typeof botStatusFilter)}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Статус" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Все боты</SelectItem>
+                      <SelectItem value="online">Онлайн</SelectItem>
+                      <SelectItem value="offline">Офлайн</SelectItem>
+                      <SelectItem value="error">С ошибками</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {selectedBots.length > 0 && (
+                    <Badge variant="secondary">{selectedBots.length} выбрано</Badge>
+                  )}
+                </div>
+                {selectedBots.length > 0 && (
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => handleBulkAction('start')}>
+                      <Icon name="Play" size={16} className="mr-2" />
+                      Запустить
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => handleBulkAction('stop')}>
+                      <Icon name="Pause" size={16} className="mr-2" />
+                      Остановить
+                    </Button>
+                    <Button variant="destructive" size="sm" onClick={() => handleBulkAction('delete')}>
+                      <Icon name="Trash2" size={16} className="mr-2" />
+                      Удалить
+                    </Button>
+                  </div>
+                )}
+              </div>
+              <div className="divide-y divide-border">
+                {filteredBots.map((bot) => (
+                  <div key={bot.id} className="p-4 hover:bg-card/80 transition-colors">
+                    <div className="flex items-center gap-4">
+                      <Checkbox
+                        checked={selectedBots.includes(bot.id)}
+                        onCheckedChange={() => toggleBotSelection(bot.id)}
+                      />
+                      <div className="text-3xl">{bot.avatar}</div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-1">
+                          <h3 className="font-semibold">{bot.name}</h3>
+                          <div className={`w-2 h-2 rounded-full ${
+                            bot.status === 'online' ? 'bg-green-500' : 
+                            bot.status === 'error' ? 'bg-destructive' : 
+                            'bg-gray-500'
+                          }`} />
+                          <Badge variant="outline" className="text-xs">{bot.token}</Badge>
+                        </div>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <span>Отправлено: {bot.messagesSent} / {bot.dailyLimit}</span>
+                          <span>•</span>
+                          <span>Активность: {bot.lastActive}</span>
+                        </div>
+                        <div className="mt-2 bg-muted rounded-full h-1.5 overflow-hidden">
+                          <div 
+                            className="bg-primary h-full transition-all"
+                            style={{ width: `${(bot.messagesSent / bot.dailyLimit) * 100}%` }}
+                          />
+                        </div>
                       </div>
-                      <p className="text-sm text-muted-foreground mb-3">
-                        Отправлено: {bot.messagesSent} сообщений
-                      </p>
                       <Dialog>
                         <DialogTrigger asChild>
-                          <Button variant="outline" size="sm" className="w-full gap-2">
+                          <Button variant="outline" size="sm" className="gap-2">
                             <Icon name="Settings" size={14} />
                             Настроить
                           </Button>
@@ -393,8 +540,12 @@ export default function Index() {
                               <Input defaultValue={bot.avatar} />
                             </div>
                             <div className="space-y-2">
-                              <Label>Описание</Label>
-                              <Textarea placeholder="Описание бота..." rows={3} />
+                              <Label>Лимит сообщений в день</Label>
+                              <Input type="number" defaultValue={bot.dailyLimit} />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Токен</Label>
+                              <Input defaultValue={bot.token} disabled className="font-mono text-xs" />
                             </div>
                             <Button className="w-full">Сохранить</Button>
                           </div>
@@ -402,9 +553,9 @@ export default function Index() {
                       </Dialog>
                     </div>
                   </div>
-                </Card>
-              ))}
-            </div>
+                ))}
+              </div>
+            </Card>
           </div>
         )}
 
