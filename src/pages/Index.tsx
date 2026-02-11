@@ -544,7 +544,7 @@ export default function Index() {
               </div>
               <div className="divide-y divide-border">
                 {filteredBots.map((bot) => (
-                  <div key={bot.id} className="p-4 hover:bg-card/80 transition-colors">
+                  <div key={bot.id} className="p-4">
                     <div className="flex items-center gap-4">
                       <Checkbox
                         checked={selectedBots.includes(bot.id)}
