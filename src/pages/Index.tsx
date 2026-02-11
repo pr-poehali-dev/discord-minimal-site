@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Icon from '@/components/ui/icon';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 type Campaign = {
@@ -75,6 +76,12 @@ export default function Index() {
   const [campaigns, setCampaigns] = useState<Campaign[]>(initialCampaigns);
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
   const [editFormData, setEditFormData] = useState({ name: '', message: '', limit: 0, selectedCommunities: [] as number[] });
+  const [logFilter, setLogFilter] = useState<'all' | 'success' | 'error' | 'warning' | 'info'>('all');
+
+  const filteredLogs = useMemo(() => {
+    if (logFilter === 'all') return mockLogs;
+    return mockLogs.filter(log => log.type === logFilter);
+  }, [logFilter]);
 
   return (
     <div className="flex h-screen bg-background text-foreground">
@@ -481,19 +488,26 @@ export default function Index() {
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-3xl font-bold">Логи системы</h2>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Icon name="Filter" size={16} />
-                  Фильтр
-                </Button>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Icon name="Download" size={16} />
-                  Экспорт
-                </Button>
+                <Select value={logFilter} onValueChange={(value) => setLogFilter(value as typeof logFilter)}>
+                  <SelectTrigger className="w-[180px]">
+                    <div className="flex items-center gap-2">
+                      <Icon name="Filter" size={16} />
+                      <SelectValue placeholder="Фильтр" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Все логи</SelectItem>
+                    <SelectItem value="success">Успешные</SelectItem>
+                    <SelectItem value="error">Ошибки</SelectItem>
+                    <SelectItem value="warning">Предупреждения</SelectItem>
+                    <SelectItem value="info">Информация</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
             <Card className="divide-y divide-border">
-              {mockLogs.map((log, idx) => (
+              {filteredLogs.map((log, idx) => (
                 <div key={idx} className="p-4 hover:bg-card/80 transition-colors">
                   <div className="flex items-start gap-4">
                     <div className="text-xs text-muted-foreground font-mono w-20">{log.time}</div>
