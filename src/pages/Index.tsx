@@ -267,7 +267,7 @@ export default function Index() {
 
             <div className="grid gap-4">
               {campaigns.map((campaign) => (
-                <Card key={campaign.id} className="p-6 hover:bg-card/80 transition-colors">
+                <Card key={campaign.id} className="p-6">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
